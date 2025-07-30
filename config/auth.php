@@ -94,10 +94,10 @@ return [
             'model' => App\Models\Admin::class,
         ],
 
-//   'parnts' => [
-//             'driver' => 'eloquent',
-//             'model' => App\Models\Parnt::class,
-//         ],
+  'parnts' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Parnt::class,
+        ],
     ],
 
     /*
