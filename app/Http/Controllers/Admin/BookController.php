@@ -19,7 +19,8 @@ class BookController extends Controller
   {
     $this->authorize('manage_users');
      
-     $query = Book::query();
+     $query = Book::with('grade');
+     
     if ($request->filled('grade_id')) {
         
         $gradeIds = explode(',', $request->grade_id);
