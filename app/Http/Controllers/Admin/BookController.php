@@ -43,7 +43,6 @@ class BookController extends Controller
   {
      $query = Book::with('grade');
      
-   
          if ($request->filled('grade_id')) {
        
         $gradeIds = explode(',', $request->grade_id);
@@ -81,6 +80,7 @@ class BookController extends Controller
           $imgPath = $request->file('img')->store(Book::storageFolder);
           $Book->img =  $imgPath;
       }
+      
 
          $Book->save();
     
