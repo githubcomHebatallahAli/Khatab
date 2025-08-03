@@ -40,7 +40,8 @@ class BookController extends Controller
 
     public function userShowAll(Request $request)
   {
-     $query = Book::query();
+     $query = Book::with('grade')->query();
+     
    
          if ($request->filled('grade_id')) {
        
