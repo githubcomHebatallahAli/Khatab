@@ -110,7 +110,7 @@ class BookController extends Controller
 
   public function userEdit(string $id)
   {
-      $Book = Book::find($id);
+      $Book = Book::with('grade')->find($id);
       if (!$Book) {
           return response()->json([
               'message' => "Book not found."
