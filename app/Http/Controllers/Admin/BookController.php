@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BookRequest;
 use App\Http\Resources\Admin\BookResource;
+use App\Http\Resources\Admin\ShowAllBookResource;
 use App\Models\Book;
-use App\Traits\ManagesModelsTrait;
 
+use App\Traits\ManagesModelsTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -32,7 +33,7 @@ class BookController extends Controller
        
      $Books = $query->orderBy('created_at', 'desc')->get();
       return response()->json([
-          'data' => BookResource::collection($Books),
+          'data' => ShowAllBookResource::collection($Books),
           'message' => "Show All Books Successfully."
       ]);
   }
@@ -54,7 +55,7 @@ class BookController extends Controller
      $Books = $query->orderBy('created_at', 'desc')->get();
 
       return response()->json([
-          'data' => BookResource::collection($Books),
+          'data' => ShowAllBookResource::collection($Books),
           'message' => "Show All Books Successfully."
       ]);
   }
