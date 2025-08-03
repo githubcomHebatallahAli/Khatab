@@ -10,7 +10,8 @@ Route::controller(bookController::class)
 ->middleware(['admin'])
 ->group(
     function () {
-
+    Route::get('/showAll/book','showAll');
+    Route::get('/edit/book/{id}','edit');
    Route::post('/create/book', 'create');
    Route::post('/update/book/{id}', 'update');
    Route::delete('/delete/book/{id}', 'destroy');
@@ -19,11 +20,3 @@ Route::get('/restore/book/{id}','restore');
 Route::delete('/forceDelete/book/{id}','forceDelete');
 });
 
-Route::controller(bookController::class)
-->prefix('/anyone')
-
-->group(
-    function () {
-    Route::get('/showAll/book','showAll');
-    Route::get('/edit/book/{id}','edit');
-        });
