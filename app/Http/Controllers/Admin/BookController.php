@@ -9,7 +9,6 @@ use App\Models\Book;
 use App\Traits\ManagesModelsTrait;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
@@ -52,14 +51,10 @@ class BookController extends Controller
             $query->where('nameOfBook', 'like', '%' . $request->nameOfBook . '%');
         }
     
-       
      $Books = $query->orderBy('created_at', 'desc')->get();
 
-         $filteredData = BookResource::collection($Books)->map(function ($resource) {
-        return Arr::except($resource->toArray(request()), ['description']);
-    });
       return response()->json([
-          'data' => $filteredData,
+          'data' => BookResource::collection($Books),
           'message' => "Show All Books Successfully."
       ]);
   }
