@@ -20,3 +20,10 @@ Route::get('/restore/book/{id}','restore');
 Route::delete('/forceDelete/book/{id}','forceDelete');
 });
 
+
+Route::controller(BookController::class)
+->group(
+    function () {
+    Route::get('/showAll/book','userShowAll');
+    Route::get('/edit/book/{id}','userEdit');
+});

@@ -13,9 +13,20 @@ use Illuminate\Support\Facades\Storage;
 class BookController extends Controller
 {
         use ManagesModelsTrait;
-
     public function showAll()
   {
+    $this->authorize('manage_users');
+     
+      $Books = Book::get();
+      return response()->json([
+          'data' => BookResource::collection($Books),
+          'message' => "Show All Books Successfully."
+      ]);
+  }
+
+    public function userShowAll()
+  {
+    
      
       $Books = Book::get();
       return response()->json([
@@ -55,6 +66,22 @@ class BookController extends Controller
 
 
   public function edit(string $id)
+  {
+    $this->authorize('manage_users');
+      $Book = Book::find($id);
+      if (!$Book) {
+          return response()->json([
+              'message' => "Book not found."
+          ]);
+      }
+
+      return response()->json([
+          'data' =>new BookResource($Book),
+          'message' => "Edit Book By ID Successfully."
+      ]);
+  }
+
+  public function userEdit(string $id)
   {
       $Book = Book::find($id);
       if (!$Book) {
