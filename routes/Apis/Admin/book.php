@@ -2,10 +2,10 @@
 
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\bookController;
+use App\Http\Controllers\Admin\BookController;
 
 
-Route::controller(bookController::class)
+Route::controller(BookController::class)
 ->prefix('/admin')
 ->middleware(['admin'])
 ->group(
