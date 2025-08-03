@@ -24,8 +24,10 @@ class Book extends Model
         return $this->belongsTo(Grade::class);
     }
 
-    // public function orders()
-    // {
-    //     return $this->hasMany(Order::class);
-    // }
+    public function carts()
+    {
+        return $this->belongsToMany(Cart::class, 'cart_books')
+                    ->withPivot('quantity', 'price')
+                    ->withTimestamps();
+    }
 }
