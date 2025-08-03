@@ -20,7 +20,7 @@ class BookController extends Controller
     $this->authorize('manage_users');
      
      $query = Book::with('grade');
-     
+
     if ($request->filled('grade_id')) {
         
         $gradeIds = explode(',', $request->grade_id);
@@ -95,7 +95,7 @@ class BookController extends Controller
   public function edit(string $id)
   {
     $this->authorize('manage_users');
-      $Book = Book::find($id);
+      $Book = Book::with('grade')->find($id);
       if (!$Book) {
           return response()->json([
               'message' => "Book not found."
