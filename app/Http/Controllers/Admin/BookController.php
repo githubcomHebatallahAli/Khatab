@@ -8,27 +8,51 @@ use App\Http\Resources\Admin\BookResource;
 use App\Models\Book;
 use App\Traits\ManagesModelsTrait;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
         use ManagesModelsTrait;
-    public function showAll()
+    public function showAll(Request $request)
   {
     $this->authorize('manage_users');
      
-      $Books = Book::get();
+     $query = Book::query();
+    if ($request->filled('grade_id')) {
+        
+        $gradeIds = explode(',', $request->grade_id);
+        $query->whereIn('grade_id', $gradeIds);
+    }
+
+        if ($request->filled('nameOfBook')) {
+            $query->where('nameOfBook', 'like', '%' . $request->nameOfBook . '%');
+        }
+    
+       
+     $Books = $query->orderBy('created_at', 'desc')->get();
       return response()->json([
           'data' => BookResource::collection($Books),
           'message' => "Show All Books Successfully."
       ]);
   }
 
-    public function userShowAll()
+    public function userShowAll(Request $request)
   {
+     $query = Book::query();
+   
+         if ($request->filled('grade_id')) {
+       
+        $gradeIds = explode(',', $request->grade_id);
+        $query->whereIn('grade_id', $gradeIds);
+    }
+
+        if ($request->filled('nameOfBook')) {
+            $query->where('nameOfBook', 'like', '%' . $request->nameOfBook . '%');
+        }
     
-     
-      $Books = Book::get();
+       
+     $Books = $query->orderBy('created_at', 'desc')->get();
       return response()->json([
           'data' => BookResource::collection($Books),
           'message' => "Show All Books Successfully."
