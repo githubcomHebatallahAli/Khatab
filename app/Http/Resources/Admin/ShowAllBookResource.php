@@ -19,6 +19,7 @@ class ShowAllBookResource extends JsonResource
             'nameOfBook' => $this->nameOfBook,
             'img' => $this->img,
             'price' => $this->price,
+            'creationDate' => $this->creationDate,
             'grade' => new GradeResource($this->whenLoaded('grade')),
           
         ];

@@ -13,6 +13,7 @@ Route::controller(CartController::class)
     function () {
    Route::get('/show/his/cart', 'show');
    Route::post('/add/book', 'addBook');
+   Route::post('/update/book/quantity', 'updateBookQuantity');
     Route::post('/remove/book', 'removeBook');
     Route::post('/clear/cart', 'clearCart');
  

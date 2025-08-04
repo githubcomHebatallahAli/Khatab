@@ -8,6 +8,34 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    // تحديث كمية كتاب في السلة
+    public function updateBookQuantity(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+        $bookId = $request->input('book_id');
+        $quantity = $request->input('quantity');
+
+        if (!is_numeric($quantity) || $quantity < 1) {
+            return response()->json(['message' => 'Invalid quantity'], 400);
+        }
+
+        $cart = Cart::findCartBySessionId($sessionId);
+        if (!$cart) {
+            return response()->json(['message' => 'Cart not found'], 404);
+        }
+
+        $book = Book::find($bookId);
+        if (!$book) {
+            return response()->json(['message' => 'Book not found'], 404);
+        }
+
+        if ($cart->hasBook($book)) {
+            $cart->updateBookQuantity($book, $quantity);
+            return response()->json(['message' => 'Book quantity updated', 'cart' => $cart->getCartDetails()]);
+        } else {
+            return response()->json(['message' => 'Book not in cart'], 404);
+        }
+    }
     // عرض تفاصيل السلة
     public function show(Request $request)
     {
