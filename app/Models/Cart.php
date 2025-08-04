@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cart extends Model
 {
-    use HasFactory;
-   
+   use HasFactory;
 
     protected $fillable = ['session_id'];
+
+    protected float $shipping = 10.0;
+    protected float $tax = 0.0;
 
     public function books()
     {
@@ -21,13 +23,15 @@ class Cart extends Model
 
     public function addBook(Book $book, $quantity = 1)
     {
-        $this->books()->attach($book->id, [
-            'quantity' => $quantity,
-            'price' => $book->price
+        $this->books()->syncWithoutDetaching([
+            $book->id => [
+                'quantity' => $quantity,
+                'price' => $book->price,
+            ]
         ]);
     }
 
-     public function updateBookQuantity(Book $book, $quantity)
+    public function updateBookQuantity(Book $book, $quantity)
     {
         if ($this->books()->where('book_id', $book->id)->exists()) {
             $this->books()->updateExistingPivot($book->id, ['quantity' => $quantity]);
@@ -41,7 +45,7 @@ class Cart extends Model
 
     public function clearCart()
     {
-        $this->books()->detach();
+        return $this->books()->detach();
     }
 
     public function totalPrice()
@@ -51,7 +55,20 @@ class Cart extends Model
         });
     }
 
+    public static function findCartBySessionId($sessionId)
+    {
+        return self::where('session_id', $sessionId)->first();
+    }
 
+    public static function createCart($sessionId)
+    {
+        return self::create(['session_id' => $sessionId]);
+    }
+
+    public static function findOrCreateCart($sessionId)
+    {
+        return self::findCartBySessionId($sessionId) ?? self::createCart($sessionId);
+    }
 
     public function getTotalQuantity()
     {
@@ -67,19 +84,52 @@ class Cart extends Model
     {
         return [
             'total_quantity' => $this->getTotalQuantity(),
-            'total_price' => $this->getTotalPriceFormatted(),
-            'book_count' => $this->bookCount(),
-            'final_price' => $this->getFinalPrice()
+            'total_price'    => $this->getTotalPriceFormatted(),
+            'book_count'     => $this->bookCount(),
+            'final_price'    => $this->getFinalPrice(),
         ];
     }
 
-
     public function getFinalPrice()
     {
-        $shipping = 10;
-        $tax = 0;
-        $total = $this->totalPrice();
-        return number_format($total + $shipping + $tax, 2, '.', '');
+        return number_format($this->totalPrice() + $this->shipping + $this->tax, 2, '.', '');
+    }
+
+    public function getCartDetails()
+    {
+        return [
+            'books' => $this->books->map(function ($book) {
+                return [
+                    'id'       => $book->id,
+                    'title'    => $book->title,
+                    'price'    => $book->pivot->price,
+                    'quantity' => $book->pivot->quantity,
+                    'total'    => $book->pivot->price * $book->pivot->quantity,
+                ];
+            }),
+            'summary' => $this->getCartSummary()
+        ];
+    }
+
+    public function hasBook(Book $book)
+    {
+        return $this->books->contains($book->id);
+    }
+
+    public function bookCount()
+    {
+        return $this->books->count();
+    }
+
+    public function getSessionId()
+    {
+        return $this->session_id;
+    }
+
+    public function setSessionId($sessionId)
+    {
+        $this->session_id = $sessionId;
+        $this->save();
     }
 
 }
