@@ -80,15 +80,23 @@ class Cart extends Model
         return number_format($this->totalPrice(), 2, '.', '');
     }
 
-    public function getCartSummary()
-    {
-        return [
-            'total_quantity' => $this->getTotalQuantity(),
-            'total_price'    => $this->getTotalPriceFormatted(),
-            'book_count'     => $this->bookCount(),
-            'final_price'    => $this->getFinalPrice(),
-        ];
-    }
+public function getCartSummary()
+{
+    $subtotal = $this->totalPrice();
+    $shipping = $this->shipping;
+    $tax = $this->tax;
+    $final = $subtotal + $shipping + $tax;
+
+    return [
+        'total_quantity' => $this->getTotalQuantity(),
+        'book_count'     => $this->bookCount(),
+        'subtotal'       => number_format($subtotal, 2, '.', ''),
+        'shipping'       => number_format($shipping, 2, '.', ''),
+        'tax'            => number_format($tax, 2, '.', ''),
+        'final_price'    => number_format($final, 2, '.', '')
+    ];
+}
+
 
     public function getFinalPrice()
     {
