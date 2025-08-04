@@ -1,9 +1,8 @@
 <?php
 
 
-namespace App\Http\Controllers\User;
+use App\Http\Controllers\User\CartController;
 use Illuminate\Support\Facades\Route;
-
 
 
 
