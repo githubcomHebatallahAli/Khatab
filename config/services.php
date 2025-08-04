@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+        'streambunny' => [
+    'api_key' => env('STREAMBUNNY_API_KEY'),
+    'library_id' => env('STREAMBUNNY_LIBRARY_ID'),
+    'zone' => env('STREAMBUNNY_ZONE', 'vz-cd91f2eb-00e'),
+],
+
 ];

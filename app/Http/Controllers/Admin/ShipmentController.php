@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\User\ShipmentRequest;
 use App\Http\Resources\User\ShipmentResource;
 use App\Models\Book;
-use App\Models\Order;
+
 use App\Models\Shipment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,18 +70,26 @@ class ShipmentController extends Controller
         return new ShipmentResource($shipment);
     }
 
+    public function edit($id)
+    {
+        $this->authorize('manage_users');
+        $shipment = Shipment::with('books')
+        ->findOrFail($id);
+        return new ShipmentResource($shipment);
+    }
+
     public function showAll()
     {
+        $this->authorize('manage_users');
         $shipments = Shipment::with('books')->get();
         return ShipmentResource::collection($shipments);
     }
     
     public function destroy($id)
     {
+        $this->authorize('manage_users');
         $shipment = Shipment::findOrFail($id);
         $shipment->delete();
         return response()->json(['message' => 'Shipment deleted successfully']);
     }
-
-
 }
