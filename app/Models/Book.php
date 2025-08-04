@@ -30,4 +30,13 @@ class Book extends Model
                     ->withPivot('quantity', 'price')
                     ->withTimestamps();
     }
+
+    public function shipments()
+    {
+        return $this->belongsToMany(Shipment::class, 'shipment_books')
+                    ->withPivot('quantity', 'price')
+                    ->withTimestamps();
+    }
+
+  
 }
