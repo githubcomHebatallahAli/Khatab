@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Cart extends Model
 {
+    use HasFactory;
+   
+
     protected $fillable = ['session_id'];
 
     public function books()
@@ -21,6 +25,13 @@ class Cart extends Model
             'quantity' => $quantity,
             'price' => $book->price
         ]);
+    }
+
+     public function updateBookQuantity(Book $book, $quantity)
+    {
+        if ($this->books()->where('book_id', $book->id)->exists()) {
+            $this->books()->updateExistingPivot($book->id, ['quantity' => $quantity]);
+        }
     }
 
     public function removeBook(Book $book)

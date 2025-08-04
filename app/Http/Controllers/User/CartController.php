@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
-use App\Models\Cart;
+use App\Http\Controllers\Controller;
 use App\Models\Book;
+use App\Models\Cart;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    // تحديث كمية كتاب في السلة
-    public function updateBookQuantity(Request $request)
+        public function updateBookQuantity(Request $request)
     {
         $sessionId = $request->session()->getId();
         $bookId = $request->input('book_id');
@@ -105,4 +105,3 @@ class CartController extends Controller
         return response()->json(['message' => 'Cart cleared', 'cart' => $cart->getCartDetails()]);
     }
 }
-
