@@ -30,4 +30,5 @@ require __DIR__ . '/Apis/User/cart.php';
 require __DIR__ . '/Apis/User/shipment.php';
 require __DIR__ . '/Apis/Chat/chat.php';
 require __DIR__ . '/Apis/Admin/book.php';
+require __DIR__ . '/Apis/Admin/premBook.php';
 

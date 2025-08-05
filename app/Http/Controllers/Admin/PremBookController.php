@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PremBookRequest;
 use App\Http\Resources\Admin\PremBookResource;
-
 use App\Http\Resources\Admin\ShowAllPremBookResource;
 use App\Models\PremBook;
 use App\Traits\ManagesModelsTrait;
@@ -25,25 +24,34 @@ class PremBookController extends Controller
         ]);
     }
 
-    public function showAllPremBook()
+    // public function showAllPremBook()
+    // {
+    //     $this->authorize('manage_users');
+
+    //     // $Book = PremBook::paginate(10);
+
+    //     $Book = PremBook::orderBy('created_at', 'desc')->paginate(10);
+
+    //     return response()->json([
+    //         'data' => ShowAllPremBookResource::collection($Book),
+    //         'pagination' => [
+    //             'total' => $Book->total(),
+    //             'count' => $Book->count(),
+    //             'per_page' => $Book->perPage(),
+    //             'current_page' => $Book->currentPage(),
+    //             'total_pages' => $Book->lastPage(),
+    //             'next_page_url' => $Book->nextPageUrl(),
+    //             'prev_page_url' => $Book->previousPageUrl(),
+    //         ],
+    //         'message' => "Show All Premium Books Successfully."
+    //     ]);
+    // }
+
+      public function userShowAll()
     {
-        $this->authorize('manage_users');
-
-        // $Book = PremBook::paginate(10);
-
-        $Book = PremBook::orderBy('created_at', 'desc')->paginate(10);
-
+        $PremBooks = PremBook::get();
         return response()->json([
-            'data' => ShowAllPremBookResource::collection($Book),
-            'pagination' => [
-                'total' => $Book->total(),
-                'count' => $Book->count(),
-                'per_page' => $Book->perPage(),
-                'current_page' => $Book->currentPage(),
-                'total_pages' => $Book->lastPage(),
-                'next_page_url' => $Book->nextPageUrl(),
-                'prev_page_url' => $Book->previousPageUrl(),
-            ],
+            'data' => ShowAllPremBookResource::collection($PremBooks),
             'message' => "Show All Premium Books Successfully."
         ]);
     }
@@ -67,6 +75,23 @@ class PremBookController extends Controller
     public function edit(string $id)
     {
         $this->authorize('manage_users');
+        $PremBook = PremBook::find($id);
+
+        if (!$PremBook) {
+            return response()->json([
+                'message' => "Premium Book not found."
+            ], 404);
+        }
+
+        return response()->json([
+            'data' =>new PremBookResource($PremBook),
+            'message' => "Edit Premium Book By ID Successfully."
+        ]);
+    }
+
+
+    public function userEdit(string $id)
+    {  
         $PremBook = PremBook::find($id);
 
         if (!$PremBook) {
