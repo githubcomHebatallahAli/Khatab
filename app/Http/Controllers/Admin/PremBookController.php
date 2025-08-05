@@ -92,7 +92,7 @@ class PremBookController extends Controller
 
     public function userEdit(string $id)
     {  
-        $PremBook = PremBook::find($id);
+        $PremBook = PremBook::with('book')->find($id);
 
         if (!$PremBook) {
             return response()->json([
