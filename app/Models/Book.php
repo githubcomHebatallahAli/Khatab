@@ -38,5 +38,11 @@ class Book extends Model
                     ->withTimestamps();
     }
 
+
+    public function premBooks()
+    {
+        return $this->hasMany(PremBook::class);
+    }
+
   
 }
