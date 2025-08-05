@@ -75,7 +75,7 @@ class PremBookController extends Controller
     public function edit(string $id)
     {
         $this->authorize('manage_users');
-        $PremBook = PremBook::find($id);
+        $PremBook = PremBook::with('book')->find($id);
 
         if (!$PremBook) {
             return response()->json([
