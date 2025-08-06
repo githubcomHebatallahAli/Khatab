@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
+use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\Grade;
 use App\Models\Order;
 use App\Models\Parnt;
-use App\Models\Course;
-use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class StatisticsController extends Controller
 {
@@ -59,17 +60,37 @@ class StatisticsController extends Controller
         });
 
 
-        $statistics = [
+        // إحصائيات مبيعات الكتب
+        $booksStats = DB::table('shipment_books')
+            ->select('book_id',
+                DB::raw('SUM(quantity) as total_quantity'),
+                DB::raw('SUM(quantity * price) as total_revenue'))
+            ->groupBy('book_id')
+            ->get()
+            ->map(function ($stat) {
+                $book = \App\Models\Book::find($stat->book_id);
+                return [
+                    'book_id' => $stat->book_id,
+                    'book_title' => $book ? $book->title : null,
+                    'total_quantity' => $stat->total_quantity,
+                    'total_revenue' => $stat->total_revenue
+                ];
+            });
 
+        $totalBooksRevenue = $booksStats->sum('total_revenue');
+
+        $statistics = [
             'General_statistics' => [
                 'Courses_count' => $coursesCount,
                 'Users_count' => $usersCount,
                 'Parents_count' => $parentsCount,
                 'Paid_orders_count' => $paidOrdersCount,
                 'Total_sales' => $totalSales,
+                'Books_total_revenue' => $totalBooksRevenue,
             ],
             'Grades_statistics' => $gradesStatistics,
             'Courses_sales' => $salesPerCourse,
+            'Books_statistics' => $booksStats,
         ];
 
         return response()->json($statistics);
