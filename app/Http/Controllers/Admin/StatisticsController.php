@@ -78,6 +78,7 @@ class StatisticsController extends Controller
             });
 
         $totalBooksRevenue = $booksStats->sum('total_revenue');
+        $totalAllSales = $totalSales + $totalBooksRevenue;
 
         $statistics = [
             'General_statistics' => [
@@ -87,6 +88,7 @@ class StatisticsController extends Controller
                 'Paid_orders_count' => $paidOrdersCount,
                 'Total_sales' => $totalSales,
                 'Books_total_revenue' => $totalBooksRevenue,
+                'All_total_sales' => $totalAllSales,
             ],
             'Grades_statistics' => $gradesStatistics,
             'Courses_sales' => $salesPerCourse,
