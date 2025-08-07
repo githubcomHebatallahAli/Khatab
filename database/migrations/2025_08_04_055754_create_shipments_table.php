@@ -17,10 +17,10 @@ return new class extends Migration
             $table->string('address');
             $table->string('phone');
             $table->string('description')->nullable();
-            $table->decimal('subtotal', 10, 2);
+            $table->decimal('subtotal', 10, 2)->default(0.00);
             $table->decimal('shipping', 10, 2)->default(10.00);
             $table->decimal('tax', 10, 2)->default(0.00);
-            $table->decimal('total', 10, 2);
+            $table->decimal('total', 10, 2)->default(0.00);
             $table->timestamp('creationDate')->nullable();
             $table->timestamps();
         });
