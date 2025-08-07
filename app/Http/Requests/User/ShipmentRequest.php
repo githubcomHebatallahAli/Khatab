@@ -32,7 +32,7 @@ class ShipmentRequest extends FormRequest
             'shipping' => 'required|numeric|min:0',
             'tax' => 'required|numeric|min:0',
             'total' => 'required|numeric|min:0',
-            'creationDate' => 'nullable|date',
+            'creationDate' => 'nullable|date_format:Y-m-d',
             'books' => 'required|array',
             'books.*.id' => 'required|exists:books,id',
             'books.*.quantity' => 'required|integer|min:1',
