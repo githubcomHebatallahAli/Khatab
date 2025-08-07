@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class ShipmentController extends Controller
 {
-    public function create(ShipmentRequest $request)
+public function create(ShipmentRequest $request)
 {
     DB::beginTransaction();
 
@@ -21,8 +21,8 @@ class ShipmentController extends Controller
         $subtotal = 0;
 
         // حساب المجموع الفرعي
-        foreach ($request->items as $item) {
-            $book = Book::findOrFail($item['book_id']);
+        foreach ($request->books as $item) {
+            $book = Book::findOrFail($item['id']);
             $subtotal += $book->price * $item['quantity'];
         }
 
@@ -42,9 +42,9 @@ class ShipmentController extends Controller
         ]);
 
         // حفظ تفاصيل الكتب داخل الطلب
-        foreach ($request->items as $item) {
-            $book = Book::findOrFail($item['book_id']);
-            $order->items()->create([
+        foreach ($request->books as $item) {
+            $book = Book::findOrFail($item['id']);
+            $order->books()->create([
                 'book_id' => $book->id,
                 'quantity' => $item['quantity'],
                 'price' => $book->price,
@@ -53,7 +53,7 @@ class ShipmentController extends Controller
         }
 
         DB::commit();
-         return (new ShipmentResource($order))->additional([
+        return (new ShipmentResource($order))->additional([
             'message' => 'تم إنشاء الطلب بنجاح'
         ]);
 
@@ -62,6 +62,7 @@ class ShipmentController extends Controller
         return response()->json(['error' => 'حدث خطأ أثناء تنفيذ الطلب', 'details' => $e->getMessage()], 500);
     }
 }
+
 
     public function show($id)
     {
