@@ -32,7 +32,7 @@ public function create(ShipmentRequest $request)
 
         // حفظ الطلب
         $order = Shipment::create([
-            'full_name' => $request->name,
+            'name' => $request->name,
             'address' => $request->address,
             'phone' => $request->phone,
             'subtotal' => $subtotal,
