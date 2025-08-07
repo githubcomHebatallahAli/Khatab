@@ -36,7 +36,7 @@ class ShipmentRequest extends FormRequest
             'books' => 'required|array',
             'books.*.id' => 'required|exists:books,id',
             'books.*.quantity' => 'required|integer|min:1',
-            'books.*.price' => 'required|numeric|min:0'
+            // 'books.*.price' => 'required|numeric|min:0'
         ];
     }
 
