@@ -44,11 +44,10 @@ public function create(ShipmentRequest $request)
         // حفظ تفاصيل الكتب داخل الطلب
         foreach ($request->books as $item) {
             $book = Book::findOrFail($item['id']);
-            $order->books()->create([
-                'book_id' => $book->id,
+            // استخدم attach بدلاً من create
+            $order->books()->attach($book->id, [
                 'quantity' => $item['quantity'],
                 'price' => $book->price,
-                'total_price' => $book->price * $item['quantity'],
             ]);
         }
 
