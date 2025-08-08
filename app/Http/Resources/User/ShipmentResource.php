@@ -24,7 +24,7 @@ class ShipmentResource extends JsonResource
             'books' => $this->books->map(function ($book) {
                 return [
                     'id' => $book->id,
-                    'title' => $book->title,
+                    'nameOfBook' => $book->nameOfBook,
                     'quantity' => $book->pivot->quantity,
                     'price' => $book->pivot->price
                 ];
