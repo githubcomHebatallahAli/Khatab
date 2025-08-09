@@ -138,6 +138,70 @@ public function createIntention(Request $request)
 }
 
 
+// public function createBookIntention(Request $request)
+// {
+//     $book = Book::findOrFail($request->input('book_id'));
+//     $priceInCents = $book->price * 100;
+
+//     $billingData = $request->input('billing_data', [
+//         'first_name' => $request->input('first_name', 'Unknown'),
+//         'last_name' => $request->input('last_name', 'N/A'),
+//         'email' => $request->input('email', 'Unknown'),
+//         'phone_number' => $request->input('phone_number', 'Unknown'),
+//     ]);
+
+//     $data = [
+//         'amount' => $priceInCents,
+//         'currency' => $request->input('currency', 'EGP'),
+//         'billing_data' => $billingData,
+//         'items' => [
+//             [
+//                 'name' => $book->nameOfBook,
+//                 'amount' => $priceInCents,
+//                 'description' => $book->description,
+//             ],
+//         ],
+//         'special_reference' => uniqid('ref_', true),
+//         'expiration' => $request->input('expiration', 3600),
+//         'notification_url' => $request->input('notification_url'),
+//         'redirection_url' => $request->input('redirection_url'),
+//     ];
+
+//     try {
+//         $response = Http::withHeaders([
+//             'Authorization' => 'Bearer ' . config('paymob.secret_key'),
+//             'Content-Type' => 'application/json',
+//         ])->post('https://accept.paymob.com/v1/intention/', $data);
+
+//         if ($response->successful()) {
+//             $paymobOrderId = $response->json()['intention_order_id'];
+
+//             $transaction = PaymobTransaction::create([
+//                 'special_reference' => $data['special_reference'],
+//                 'paymob_order_id' => $paymobOrderId,
+//                 'book_id' => $book->id,
+//                 'price' => $book->price,
+//                 'currency' => $data['currency'],
+//                 'status' => 'pending',
+//             ]);
+
+//             return response()->json([
+//                 'transaction' => $transaction,
+//                 'response' => $response->json(),
+//             ]);
+//         } else {
+//             return response()->json([
+//                 'error' => 'Request failed',
+//                 'details' => $response->json(),
+//             ]);
+//         }
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'error' => $e->getMessage(),
+//         ], 500);
+//     }     
+// }
+
 public function createBookIntention(Request $request)
 {
     $book = Book::findOrFail($request->input('book_id'));
@@ -165,6 +229,9 @@ public function createBookIntention(Request $request)
         'expiration' => $request->input('expiration', 3600),
         'notification_url' => $request->input('notification_url'),
         'redirection_url' => $request->input('redirection_url'),
+        // الحقول الجديدة
+        'payment_methods' => $request->input('payment_methods', []),
+        'selected_method_index' => $request->input('selected_method_index', 0),
     ];
 
     try {
@@ -199,10 +266,9 @@ public function createBookIntention(Request $request)
         return response()->json([
             'error' => $e->getMessage(),
         ], 500);
-    }
-        
-   
+    }     
 }
+
 
 
     public function generateCheckoutUrl(Request $request)
