@@ -44,5 +44,10 @@ class Book extends Model
         return $this->hasMany(PremBook::class);
     }
 
+    public function paymobTransactions()
+    {
+        return $this->hasMany(PaymobTransaction::class);
+    }
+
   
 }

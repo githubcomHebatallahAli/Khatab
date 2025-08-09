@@ -12,6 +12,7 @@ class PaymobTransaction extends Model
         'payment_method_id',
         'user_id',
         'course_id',
+        'book_id',
         'price',
         'currency',
         'status'
@@ -32,5 +33,10 @@ class PaymobTransaction extends Model
     public function course()
     {
         return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function book()
+    {
+        return $this->belongsTo(Book::class, 'book_id');
     }
 }

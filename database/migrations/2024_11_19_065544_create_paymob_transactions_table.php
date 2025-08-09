@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('payment_method_id')->constrained('paymob_methods')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->foreignId('course_id')->nullable()->constrained('courses')->cascadeOnDelete();
+            $table->foreignId('book_id')->nullable()->constrained('books')->nullOnDelete();
             $table->decimal('price', 10, 2);
             $table->string('currency')->default('EGP');
             $table->enum('status', ['paid', 'pending', 'canceled'])->default('pending')->nullable();
