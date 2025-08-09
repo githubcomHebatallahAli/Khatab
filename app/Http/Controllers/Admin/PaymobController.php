@@ -224,9 +224,6 @@ public function createBookIntention(Request $request)
 }
 
 
-
-
-
     public function generateCheckoutUrl(Request $request)
 {
     $publicKey = $request->input('public_key');
