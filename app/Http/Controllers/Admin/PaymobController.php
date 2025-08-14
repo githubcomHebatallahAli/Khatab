@@ -252,9 +252,18 @@ class PaymobController extends Controller
 //     ]);
 // }
 
+private function getNormalizedBaseUrl()
+{
+    $baseUrl = rtrim((string) config('paymob.base_url'), '/');
+    if (substr($baseUrl, -4) === '/api') {
+        $baseUrl = substr($baseUrl, 0, -4);
+    }
+    return $baseUrl;
+}
+
 private function getPaymobToken()
 {
-    $response = Http::post(config('paymob.base_url') . '/api/auth/tokens', [
+    $response = Http::post($this->getNormalizedBaseUrl() . '/api/auth/tokens', [
         'api_key' => config('paymob.api_key'),
     ]);
 
@@ -330,7 +339,7 @@ public function createIntention(Request $request)
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
             'Content-Type' => 'application/json',
-        ])->post(config('paymob.base_url') . '/v1/intention/', $data);
+        ])->post($this->getNormalizedBaseUrl() . '/v1/intention/', $data);
 
         if ($response->successful()) {
             $paymobOrderId = $response->json()['intention_order_id'];
@@ -414,7 +423,7 @@ public function createBookIntention(Request $request)
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
             'Content-Type' => 'application/json',
-        ])->post(config('paymob.base_url') . '/v1/intention/', $data);
+        ])->post($this->getNormalizedBaseUrl() . '/v1/intention/', $data);
 
         if ($response->successful()) {
             $paymobOrderId = $response->json()['intention_order_id'];
