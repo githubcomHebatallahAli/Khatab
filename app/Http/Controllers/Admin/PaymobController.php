@@ -254,7 +254,7 @@ class PaymobController extends Controller
 
 private function getPaymobToken()
 {
-    $response = Http::post(config('paymob.base_url') . '/auth/tokens', [
+    $response = Http::post(config('paymob.base_url') . '/api/auth/tokens', [
         'api_key' => config('paymob.api_key'),
     ]);
 
@@ -294,7 +294,7 @@ public function createIntention(Request $request)
         return response()->json(['error' => 'Course not found.'], 404);
     }
 
-    $priceInCents = $course->price * 100;
+    $priceInCents = (int) round($course->price * 100);
 
     // استخدام نفس منطق billing_data من الكود اللي عندك
     $billingData = $request->input('billing_data', [
@@ -353,7 +353,8 @@ public function createIntention(Request $request)
         } else {
             return response()->json([
                 'error' => 'Request failed',
-                'details' => $response->json(),
+                'status' => $response->status(),
+                'details' => $response->json() ?: $response->body(),
             ], 422);
         }
     } catch (\Exception $e) {
@@ -366,7 +367,7 @@ public function createIntention(Request $request)
 public function createBookIntention(Request $request)
 {
     $book = Book::findOrFail($request->input('book_id'));
-    $priceInCents = $book->price * 100;
+    $priceInCents = (int) round($book->price * 100);
 
     $integrationIds = $request->input('payment_methods', []);
     $selectedIndex = $request->input('selected_method_index', 0);
@@ -408,10 +409,12 @@ public function createBookIntention(Request $request)
     ];
 
     try {
+        $token = $this->getPaymobToken();
+
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('paymob.secret_key'),
+            'Authorization' => 'Bearer ' . $token,
             'Content-Type' => 'application/json',
-        ])->post('https://accept.paymob.com/v1/intention/', $data);
+        ])->post(config('paymob.base_url') . '/v1/intention/', $data);
 
         if ($response->successful()) {
             $paymobOrderId = $response->json()['intention_order_id'];
@@ -433,7 +436,8 @@ public function createBookIntention(Request $request)
         } else {
             return response()->json([
                 'error' => 'Request failed',
-                'details' => $response->json(),
+                'status' => $response->status(),
+                'details' => $response->json() ?: $response->body(),
             ], 422);
         }
     } catch (\Exception $e) {
