@@ -267,11 +267,13 @@ private function getPaymobToken()
 
 public function createIntention(Request $request)
 {
+    // جلب المستخدم من التوكن
     $user = auth()->guard('api')->user();
     if (!$user) {
         return response()->json(['error' => 'User not authenticated.'], 401);
     }
 
+    // التحقق من وسائل الدفع
     $integrationIds = $request->input('payment_methods', []);
     $selectedIndex = $request->input('selected_method_index', 0);
 
@@ -286,19 +288,23 @@ public function createIntention(Request $request)
         return response()->json(['error' => 'Invalid payment method ID (integration_id).'], 422);
     }
 
+    // جلب الكورس
     $course = Course::find($request->input('course_id'));
     if (!$course) {
         return response()->json(['error' => 'Course not found.'], 404);
     }
 
     $priceInCents = $course->price * 100;
-    $billingData = $request->input('billing_data', [
-        'first_name' => $user->name ?? 'Unknown',
-        'last_name' => 'N/A',
-        'email' => $user->email ?? 'Unknown',
-        'phone_number' => $user->studentPhoNum ?? 'Unknown',
-    ]);
 
+    // توليد billing_data من التوكن
+    $billingData = [
+        'first_name'   => $user->name ?? 'Unknown',
+        'last_name'    => 'N/A',
+        'email'        => $user->email ?? 'Unknown',
+        'phone_number' => $user->studentPhoNum ?? 'Unknown',
+    ];
+
+    // بيانات Intention
     $data = [
         "amount" => $priceInCents,
         "currency" => config('paymob.currency'),
@@ -312,7 +318,7 @@ public function createIntention(Request $request)
             ],
         ],
         "special_reference" => uniqid('ref_', true),
-        "expiration" => config('paymob.expiration'),
+        "expiration" => config('paymob.expiration', 3600),
         "notification_url" => config('paymob.notification_url'),
         "redirection_url" => config('paymob.redirection_url'),
     ];
@@ -321,7 +327,7 @@ public function createIntention(Request $request)
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . config('paymob.secret_key'),
             'Content-Type' => 'application/json',
-        ])->post('https://accept.paymob.com/v1/intention/', $data);
+        ])->post(config('paymob.base_url') . '/v1/intention/', $data);
 
         if ($response->successful()) {
             $paymobOrderId = $response->json()['intention_order_id'];
@@ -351,6 +357,7 @@ public function createIntention(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+
 
 public function createBookIntention(Request $request)
 {
