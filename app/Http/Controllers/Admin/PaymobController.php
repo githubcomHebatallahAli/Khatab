@@ -296,13 +296,13 @@ public function createIntention(Request $request)
 
     $priceInCents = $course->price * 100;
 
-    // توليد billing_data من التوكن
-    $billingData = [
+    // استخدام نفس منطق billing_data من الكود اللي عندك
+    $billingData = $request->input('billing_data', [
         'first_name'   => $user->name ?? 'Unknown',
         'last_name'    => 'N/A',
         'email'        => $user->email ?? 'Unknown',
         'phone_number' => $user->studentPhoNum ?? 'Unknown',
-    ];
+    ]);
 
     // بيانات Intention
     $data = [
@@ -324,8 +324,11 @@ public function createIntention(Request $request)
     ];
 
     try {
+        // استخدام التوكن بدل secret_key
+        $token = $this->getPaymobToken();
+
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('paymob.secret_key'),
+            'Authorization' => 'Bearer ' . $token,
             'Content-Type' => 'application/json',
         ])->post(config('paymob.base_url') . '/v1/intention/', $data);
 
@@ -357,6 +360,7 @@ public function createIntention(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+
 
 
 public function createBookIntention(Request $request)
