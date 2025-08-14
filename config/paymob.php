@@ -10,6 +10,10 @@ return [
     'base_url' => env('PAYMOB_BASE_URL'),
     'merchant_id' => env('PAYMOB_MERCHANT_ID'),
 
+    'notification_url' => env('PAYMOB_NOTIFICATION_URL'),
+    'expiration' => env('PAYMOB_EXPIRATION', 3600),
+    'redirection_url' => env('PAYMOB_REDIRECTION_URL'),
+
     // 'iframe_id' => env('PAYMOB_IFRAME_ID'),
 ];
 
