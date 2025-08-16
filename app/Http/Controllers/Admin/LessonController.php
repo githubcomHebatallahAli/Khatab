@@ -235,68 +235,12 @@ $Lesson->save();
 
 
 
-//     public function update(LessonRequest $request, string $id)
-//     {
-//         // ini_set('memory_limit', '2G');
-//         $this->authorize('manage_users');
-//         $Lesson = Lesson::findOrFail($id);
+    public function update(LessonRequest $request, string $id)
+    {
+        // ini_set('memory_limit', '2G');
+        $this->authorize('manage_users');
+        $Lesson = Lesson::findOrFail($id);
 
-//         $Lesson->update([
-//             "grade_id" => $request->grade_id,
-//             "lec_id" => $request->lec_id,
-//             "course_id" => $request->course_id,
-//             "title" => $request->title,
-//             "description" => $request->description,
-//             "duration" => $request->duration,
-//         ]);
-
-
-//         if ($request->hasFile('poster')) {
-//             if ($Lesson->poster) {
-//                 Storage::disk('public')->delete($Lesson->poster);
-//             }
-//             $posterPath = $request->file('poster')->store('Lessons', 'public');
-//             $Lesson->poster = $posterPath;
-//         }
-
-//         if ($request->hasFile('video')) {
-//             if ($Lesson->video) {
-//                 Storage::disk('public')->delete($Lesson->video);
-//             }
-//             $videoPath = $request->file('video')->store('Lessons', 'public');
-//             $Lesson->video = $videoPath;
-//         }
-
-//         if ($request->hasFile('ExplainPdf')) {
-//             if ($Lesson->ExplainPdf) {
-//                 Storage::disk('public')->delete($Lesson->ExplainPdf);
-//             }
-//             $ExplainPdfPath = $request->file('ExplainPdf')->store('Lessons', 'public');
-//             $Lesson->ExplainPdf = $ExplainPdfPath;
-
-//             $pdfParser = new PdfParser();
-//             $pdf = $pdfParser->parseFile(public_path($ExplainPdfPath));
-//             $numberOfPages = count($pdf->getPages());
-
-//             $Lesson->numOfPdf = $numberOfPages;
-//         }
-
-//         $Lesson->save();
-
-//         return response()->json([
-//             'data' => new LessonResource($Lesson),
-//             'message' => "Lesson updated successfully."
-//         ]);
-
-// }
-
-public function update(Request $request, string $id)
-{
-    $this->authorize('manage_users');
-    $Lesson = Lesson::findOrFail($id);
-
-    try {
-        // تحديث تفاصيل الدرس الأساسية
         $Lesson->update([
             "grade_id" => $request->grade_id,
             "lec_id" => $request->lec_id,
@@ -306,127 +250,183 @@ public function update(Request $request, string $id)
             "duration" => $request->duration,
         ]);
 
-        // تحديث البوستر
-        if ($request->hasFile('poster') && $request->file('poster')->isValid()) {
+
+        if ($request->hasFile('poster')) {
             if ($Lesson->poster) {
-                Storage::delete($Lesson->poster); // حذف البوستر القديم
+                Storage::disk('public')->delete($Lesson->poster);
             }
-            $posterPath = $request->file('poster')->store(Lesson::storageFolder);
+            $posterPath = $request->file('poster')->store('Lessons', 'public');
             $Lesson->poster = $posterPath;
         }
 
-        // تحديث الفيديو
-        if ($request->hasFile('video') && $request->file('video')->isValid()) {
-            $videoFile = $request->file('video');
-
-            // جلب بيانات BunnyCDN
-            $libraryId = config('services.streambunny.library_id');
-            $apiKey = config('services.streambunny.api_key');
-            $zone = config('services.streambunny.zone');
-            $client = new GuzzleClient();
-
-            // 1. حذف الفيديو القديم إذا كان موجودًا
-            if (!empty($Lesson->video)) {
-                preg_match('/\/(\w+)\/play_480p\.mp4$/', $Lesson->video, $matches);
-                if (isset($matches[1])) {
-                    $oldVideoId = $matches[1];
-                    $deleteUrl = "https://video.bunnycdn.com/library/{$libraryId}/videos/{$oldVideoId}";
-
-                    try {
-                        $client->delete($deleteUrl, [
-                            'headers' => [
-                                'AccessKey' => $apiKey,
-                                'Accept' => 'application/json',
-                            ],
-                        ]);
-                    } catch (\Exception $e) {
-                        Log::error('فشل حذف الفيديو القديم من BunnyCDN: ' . $e->getMessage());
-                        return response()->json(['error' => 'فشل حذف الفيديو القديم.'], 500);
-                    }
-                }
+        if ($request->hasFile('video')) {
+            if ($Lesson->video) {
+                Storage::disk('public')->delete($Lesson->video);
             }
-
-            // 2. إنشاء فيديو جديد في BunnyCDN
-            $createVideoUrl = "https://video.bunnycdn.com/library/{$libraryId}/videos";
-            try {
-                $createVideoResponse = $client->post($createVideoUrl, [
-                    'headers' => [
-                        'AccessKey' => $apiKey,
-                        'Accept' => 'application/json',
-                        'Content-Type' => 'application/json',
-                    ],
-                    'json' => ['title' => $Lesson->title],
-                ]);
-
-                $videoData = json_decode($createVideoResponse->getBody(), true);
-                $newVideoId = $videoData['guid'];
-            } catch (\Exception $e) {
-                Log::error('فشل إنشاء الفيديو في BunnyCDN: ' . $e->getMessage());
-                return response()->json(['error' => 'فشل إنشاء الفيديو الجديد في BunnyCDN.'], 500);
-            }
-
-            // 3. رفع الفيديو الجديد باستخدام GuzzleClient
-            $uploadUrl = "https://video.bunnycdn.com/library/{$libraryId}/videos/{$newVideoId}";
-
-            try {
-                $uploadResponse = $client->put($uploadUrl, [
-                    'headers' => [
-                        'AccessKey' => $apiKey,
-                        'Content-Type' => 'application/octet-stream',
-                    ],
-                    'body' => fopen($videoFile->getRealPath(), 'r'),
-                ]);
-
-                if ($uploadResponse->getStatusCode() !== 200) {
-                    throw new \Exception('خطأ أثناء رفع الفيديو.');
-                }
-            } catch (\Exception $e) {
-                Log::error('فشل رفع الفيديو إلى BunnyCDN: ' . $e->getMessage());
-                return response()->json(['error' => 'فشل رفع الفيديو إلى BunnyCDN.'], 500);
-            }
-
-            // 4. تحديث رابط الفيديو في قاعدة البيانات
-            $Lesson->video = "https://{$zone}.b-cdn.net/{$newVideoId}/play_480p.mp4";
+            $videoPath = $request->file('video')->store('Lessons', 'public');
+            $Lesson->video = $videoPath;
         }
 
-             if ($request->hasFile('ExplainPdf')) {
-                        if ($Lesson->ExplainPdf) {
-                            Storage::disk('public')->delete($Lesson->ExplainPdf);
-                        }
-                        $ExplainPdfPath = $request->file('ExplainPdf')->store('Lessons', 'public');
-                        $Lesson->ExplainPdf = $ExplainPdfPath;
+        if ($request->hasFile('ExplainPdf')) {
+            if ($Lesson->ExplainPdf) {
+                Storage::disk('public')->delete($Lesson->ExplainPdf);
+            }
+            $ExplainPdfPath = $request->file('ExplainPdf')->store('Lessons', 'public');
+            $Lesson->ExplainPdf = $ExplainPdfPath;
 
-                        $pdfParser = new PdfParser();
-                        $pdf = $pdfParser->parseFile(public_path($ExplainPdfPath));
-                        $numberOfPages = count($pdf->getPages());
+            $pdfParser = new PdfParser();
+            $pdf = $pdfParser->parseFile(public_path($ExplainPdfPath));
+            $numberOfPages = count($pdf->getPages());
 
-                        $Lesson->numOfPdf = $numberOfPages;
-                    }
+            $Lesson->numOfPdf = $numberOfPages;
+        }
 
-        // حفظ التحديثات
         $Lesson->save();
 
-        // تحديث عدد الدروس في الكورس
-        $course = $Lesson->course;
-        $course->numOfLessons = $course->lessons()->count();
-        $course->save();
-
-        // الاستجابة بالنجاح
         return response()->json([
             'data' => new LessonResource($Lesson),
             'message' => "Lesson updated successfully."
         ]);
 
-    } catch (\Exception $e) {
-        // تسجيل الخطأ في اللوج
-        Log::error($e->getMessage());
-
-        return response()->json([
-            'error' => 'An error occurred while updating the lesson.',
-            'details' => $e->getMessage()
-        ], 500);
-    }
 }
+
+// public function update(Request $request, string $id)
+// {
+//     $this->authorize('manage_users');
+//     $Lesson = Lesson::findOrFail($id);
+
+//     try {
+//         // تحديث تفاصيل الدرس الأساسية
+//         $Lesson->update([
+//             "grade_id" => $request->grade_id,
+//             "lec_id" => $request->lec_id,
+//             "course_id" => $request->course_id,
+//             "title" => $request->title,
+//             "description" => $request->description,
+//             "duration" => $request->duration,
+//         ]);
+
+//         // تحديث البوستر
+//         if ($request->hasFile('poster') && $request->file('poster')->isValid()) {
+//             if ($Lesson->poster) {
+//                 Storage::delete($Lesson->poster); // حذف البوستر القديم
+//             }
+//             $posterPath = $request->file('poster')->store(Lesson::storageFolder);
+//             $Lesson->poster = $posterPath;
+//         }
+
+//         // تحديث الفيديو
+//         if ($request->hasFile('video') && $request->file('video')->isValid()) {
+//             $videoFile = $request->file('video');
+
+//             // جلب بيانات BunnyCDN
+//             $libraryId = config('services.streambunny.library_id');
+//             $apiKey = config('services.streambunny.api_key');
+//             $zone = config('services.streambunny.zone');
+//             $client = new GuzzleClient();
+
+//             // 1. حذف الفيديو القديم إذا كان موجودًا
+//             if (!empty($Lesson->video)) {
+//                 preg_match('/\/(\w+)\/play_480p\.mp4$/', $Lesson->video, $matches);
+//                 if (isset($matches[1])) {
+//                     $oldVideoId = $matches[1];
+//                     $deleteUrl = "https://video.bunnycdn.com/library/{$libraryId}/videos/{$oldVideoId}";
+
+//                     try {
+//                         $client->delete($deleteUrl, [
+//                             'headers' => [
+//                                 'AccessKey' => $apiKey,
+//                                 'Accept' => 'application/json',
+//                             ],
+//                         ]);
+//                     } catch (\Exception $e) {
+//                         Log::error('فشل حذف الفيديو القديم من BunnyCDN: ' . $e->getMessage());
+//                         return response()->json(['error' => 'فشل حذف الفيديو القديم.'], 500);
+//                     }
+//                 }
+//             }
+
+//             // 2. إنشاء فيديو جديد في BunnyCDN
+//             $createVideoUrl = "https://video.bunnycdn.com/library/{$libraryId}/videos";
+//             try {
+//                 $createVideoResponse = $client->post($createVideoUrl, [
+//                     'headers' => [
+//                         'AccessKey' => $apiKey,
+//                         'Accept' => 'application/json',
+//                         'Content-Type' => 'application/json',
+//                     ],
+//                     'json' => ['title' => $Lesson->title],
+//                 ]);
+
+//                 $videoData = json_decode($createVideoResponse->getBody(), true);
+//                 $newVideoId = $videoData['guid'];
+//             } catch (\Exception $e) {
+//                 Log::error('فشل إنشاء الفيديو في BunnyCDN: ' . $e->getMessage());
+//                 return response()->json(['error' => 'فشل إنشاء الفيديو الجديد في BunnyCDN.'], 500);
+//             }
+
+//             // 3. رفع الفيديو الجديد باستخدام GuzzleClient
+//             $uploadUrl = "https://video.bunnycdn.com/library/{$libraryId}/videos/{$newVideoId}";
+
+//             try {
+//                 $uploadResponse = $client->put($uploadUrl, [
+//                     'headers' => [
+//                         'AccessKey' => $apiKey,
+//                         'Content-Type' => 'application/octet-stream',
+//                     ],
+//                     'body' => fopen($videoFile->getRealPath(), 'r'),
+//                 ]);
+
+//                 if ($uploadResponse->getStatusCode() !== 200) {
+//                     throw new \Exception('خطأ أثناء رفع الفيديو.');
+//                 }
+//             } catch (\Exception $e) {
+//                 Log::error('فشل رفع الفيديو إلى BunnyCDN: ' . $e->getMessage());
+//                 return response()->json(['error' => 'فشل رفع الفيديو إلى BunnyCDN.'], 500);
+//             }
+
+//             // 4. تحديث رابط الفيديو في قاعدة البيانات
+//             $Lesson->video = "https://{$zone}.b-cdn.net/{$newVideoId}/play_480p.mp4";
+//         }
+
+//              if ($request->hasFile('ExplainPdf')) {
+//                         if ($Lesson->ExplainPdf) {
+//                             Storage::disk('public')->delete($Lesson->ExplainPdf);
+//                         }
+//                         $ExplainPdfPath = $request->file('ExplainPdf')->store('Lessons', 'public');
+//                         $Lesson->ExplainPdf = $ExplainPdfPath;
+
+//                         $pdfParser = new PdfParser();
+//                         $pdf = $pdfParser->parseFile(public_path($ExplainPdfPath));
+//                         $numberOfPages = count($pdf->getPages());
+
+//                         $Lesson->numOfPdf = $numberOfPages;
+//                     }
+
+//         // حفظ التحديثات
+//         $Lesson->save();
+
+//         // تحديث عدد الدروس في الكورس
+//         $course = $Lesson->course;
+//         $course->numOfLessons = $course->lessons()->count();
+//         $course->save();
+
+//         // الاستجابة بالنجاح
+//         return response()->json([
+//             'data' => new LessonResource($Lesson),
+//             'message' => "Lesson updated successfully."
+//         ]);
+
+//     } catch (\Exception $e) {
+//         // تسجيل الخطأ في اللوج
+//         Log::error($e->getMessage());
+
+//         return response()->json([
+//             'error' => 'An error occurred while updating the lesson.',
+//             'details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 
 public function destroy(string $id){
