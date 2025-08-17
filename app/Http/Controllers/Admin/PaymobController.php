@@ -541,12 +541,10 @@ public function createIntention(Request $request)
     //     }
     // }
 
-    public function createBookIntention(Request $request)
+public function createBookIntention(Request $request)
 {
     $book = Book::findOrFail($request->input('book_id'));
-
-    // (1) المبلغ بالـ cents كعدد صحيح
-    $priceInCents = (int) round(((float) $book->price) * 100);
+    $priceInCents = $book->price * 100;
 
     $integrationIds = $request->input('payment_methods', []);
     $selectedIndex = $request->input('selected_method_index', 0);
@@ -563,40 +561,37 @@ public function createIntention(Request $request)
     }
 
     $billingData = $request->input('billing_data', [
-        'first_name'   => $request->input('first_name', 'Unknown'),
-        'last_name'    => $request->input('last_name', 'N/A'),
-        'email'        => $request->input('email', 'unknown@example.com'),
-        'phone_number' => $request->input('phone_number', '0000000000'),
+        'first_name' => $request->input('first_name', 'Unknown'),
+        'last_name' => $request->input('last_name', 'N/A'),
+        'email' => $request->input('email', 'Unknown'),
+        'phone_number' => $request->input('phone_number', 'Unknown'),
     ]);
 
-    // (2) تنظيف الوصف + fallback
-    $bookDescription = strip_tags((string) ($book->description ?? ''));
-    $bookDescription = trim($bookDescription);
-    if ($bookDescription === '') {
-        $bookDescription = 'Book Payment';
-    }
-    $bookDescription = mb_substr($bookDescription, 0, 255, 'UTF-8');
+    // 🔥 تنظيف الوصف (من غير HTML + max 255 chars)
+    $cleanDescription = substr(strip_tags($book->description ?? ''), 0, 255);
 
     $data = [
-        'amount'           => $priceInCents,
-        'currency'         => config('paymob.currency'),
-        'billing_data'     => $billingData,
-        'items' => [[
-            'name'        => (string) $book->nameOfBook,
-            'amount'      => $priceInCents,
-            'description' => $bookDescription,
-        ]],
+        'amount' => $priceInCents,
+        'currency' => config('paymob.currency'),
+        'billing_data' => $billingData,
+        'items' => [
+            [
+                'name' => $book->nameOfBook,
+                'amount' => $priceInCents,
+                'description' => $cleanDescription,
+            ],
+        ],
         'special_reference' => uniqid('ref_', true),
-        'expiration'        => (int) config('paymob.expiration'),
-        'notification_url'  => config('paymob.notification_url'),
-        'redirection_url'   => config('paymob.redirection_url'),
-        'payment_methods'   => $integrationIds,
+        'expiration' => config('paymob.expiration'),
+        'notification_url' => config('paymob.notification_url'),
+        'redirection_url' => config('paymob.redirection_url'),
+        'payment_methods' => $integrationIds
     ];
 
     try {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . config('paymob.secret_key'),
-            'Content-Type'  => 'application/json',
+            'Content-Type' => 'application/json',
         ])->post('https://accept.paymob.com/v1/intention/', $data);
 
         if ($response->successful()) {
@@ -604,21 +599,21 @@ public function createIntention(Request $request)
 
             $transaction = PaymobTransaction::create([
                 'special_reference' => $data['special_reference'],
-                'paymob_order_id'   => $paymobOrderId,
-                'book_id'           => $book->id,
+                'paymob_order_id' => $paymobOrderId,
+                'book_id' => $book->id,
                 'payment_method_id' => $paymentMethod->id,
-                'price'             => $book->price,
-                'currency'          => $data['currency'],
-                'status'            => 'pending',
+                'price' => $book->price,
+                'currency' => $data['currency'],
+                'status' => 'pending',
             ]);
 
             return response()->json([
                 'transaction' => $transaction,
-                'response'    => $response->json(),
+                'response' => $response->json(),
             ]);
         } else {
             return response()->json([
-                'error'   => 'Request failed',
+                'error' => 'Request failed',
                 'details' => $response->json(),
             ], 422);
         }
@@ -626,6 +621,7 @@ public function createIntention(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+
 
 
     public function generateCheckoutUrl(Request $request)
