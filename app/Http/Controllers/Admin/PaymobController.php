@@ -463,83 +463,170 @@ public function createIntention(Request $request)
 }
 
 
+    // public function createBookIntention(Request $request)
+    // {
+    //     $book = Book::findOrFail($request->input('book_id'));
+    //     $priceInCents = $book->price * 100;
+
+    //     $integrationIds = $request->input('payment_methods', []);
+    //     $selectedIndex = $request->input('selected_method_index', 0);
+
+    //     if (!is_numeric($selectedIndex) || !isset($integrationIds[$selectedIndex])) {
+    //         return response()->json(['error' => 'Invalid selected_method_index.'], 422);
+    //     }
+
+    //     $paymentMethodId = $integrationIds[$selectedIndex];
+    //     $paymentMethod = PaymobMethod::where('integration_id', $paymentMethodId)->first();
+
+    //     if (!$paymentMethod) {
+    //         return response()->json(['error' => 'Invalid payment method ID (integration_id).'], 422);
+    //     }
+
+    //     $billingData = $request->input('billing_data', [
+    //         'first_name' => $request->input('first_name', 'Unknown'),
+    //         'last_name' => $request->input('last_name', 'N/A'),
+    //         'email' => $request->input('email', 'Unknown'),
+    //         'phone_number' => $request->input('phone_number', 'Unknown'),
+    //     ]);
+
+    //     $data = [
+    //         'amount' => $priceInCents,
+    //         'currency' => config('paymob.currency'),
+    //         'billing_data' => $billingData,
+    //         'items' => [
+    //             [
+    //                 'name' => $book->nameOfBook,
+    //                 'amount' => $priceInCents,
+    //                 'description' => $book->description,
+    //             ],
+    //         ],
+    //         'special_reference' => uniqid('ref_', true),
+    //         'expiration' => config('paymob.expiration'),
+    //         'notification_url' => config('paymob.notification_url'),
+    //         'redirection_url' => config('paymob.redirection_url'),
+    //         'payment_methods' => $integrationIds
+    //     ];
+
+    //     try {
+    //         $response = Http::withHeaders([
+    //             'Authorization' => 'Bearer ' . config('paymob.secret_key'),
+    //             'Content-Type' => 'application/json',
+    //         ])->post('https://accept.paymob.com/v1/intention/', $data);
+
+    //         if ($response->successful()) {
+    //             $paymobOrderId = $response->json()['intention_order_id'];
+
+    //             $transaction = PaymobTransaction::create([
+    //                 'special_reference' => $data['special_reference'],
+    //                 'paymob_order_id' => $paymobOrderId,
+    //                 'book_id' => $book->id,
+    //                 'payment_method_id' => $paymentMethod->id,
+    //                 'price' => $book->price,
+    //                 'currency' => $data['currency'],
+    //                 'status' => 'pending',
+    //             ]);
+
+    //             return response()->json([
+    //                 'transaction' => $transaction,
+    //                 'response' => $response->json(),
+    //             ]);
+    //         } else {
+    //             return response()->json([
+    //                 'error' => 'Request failed',
+    //                 'details' => $response->json(),
+    //             ], 422);
+    //         }
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 500);
+    //     }
+    // }
+
     public function createBookIntention(Request $request)
-    {
-        $book = Book::findOrFail($request->input('book_id'));
-        $priceInCents = $book->price * 100;
+{
+    $book = Book::findOrFail($request->input('book_id'));
 
-        $integrationIds = $request->input('payment_methods', []);
-        $selectedIndex = $request->input('selected_method_index', 0);
+    // (1) المبلغ بالـ cents كعدد صحيح
+    $priceInCents = (int) round(((float) $book->price) * 100);
 
-        if (!is_numeric($selectedIndex) || !isset($integrationIds[$selectedIndex])) {
-            return response()->json(['error' => 'Invalid selected_method_index.'], 422);
-        }
+    $integrationIds = $request->input('payment_methods', []);
+    $selectedIndex = $request->input('selected_method_index', 0);
 
-        $paymentMethodId = $integrationIds[$selectedIndex];
-        $paymentMethod = PaymobMethod::where('integration_id', $paymentMethodId)->first();
-
-        if (!$paymentMethod) {
-            return response()->json(['error' => 'Invalid payment method ID (integration_id).'], 422);
-        }
-
-        $billingData = $request->input('billing_data', [
-            'first_name' => $request->input('first_name', 'Unknown'),
-            'last_name' => $request->input('last_name', 'N/A'),
-            'email' => $request->input('email', 'Unknown'),
-            'phone_number' => $request->input('phone_number', 'Unknown'),
-        ]);
-
-        $data = [
-            'amount' => $priceInCents,
-            'currency' => config('paymob.currency'),
-            'billing_data' => $billingData,
-            'items' => [
-                [
-                    'name' => $book->nameOfBook,
-                    'amount' => $priceInCents,
-                    'description' => $book->description,
-                ],
-            ],
-            'special_reference' => uniqid('ref_', true),
-            'expiration' => config('paymob.expiration'),
-            'notification_url' => config('paymob.notification_url'),
-            'redirection_url' => config('paymob.redirection_url'),
-            'payment_methods' => $integrationIds
-        ];
-
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('paymob.secret_key'),
-                'Content-Type' => 'application/json',
-            ])->post('https://accept.paymob.com/v1/intention/', $data);
-
-            if ($response->successful()) {
-                $paymobOrderId = $response->json()['intention_order_id'];
-
-                $transaction = PaymobTransaction::create([
-                    'special_reference' => $data['special_reference'],
-                    'paymob_order_id' => $paymobOrderId,
-                    'book_id' => $book->id,
-                    'payment_method_id' => $paymentMethod->id,
-                    'price' => $book->price,
-                    'currency' => $data['currency'],
-                    'status' => 'pending',
-                ]);
-
-                return response()->json([
-                    'transaction' => $transaction,
-                    'response' => $response->json(),
-                ]);
-            } else {
-                return response()->json([
-                    'error' => 'Request failed',
-                    'details' => $response->json(),
-                ], 422);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+    if (!is_numeric($selectedIndex) || !isset($integrationIds[$selectedIndex])) {
+        return response()->json(['error' => 'Invalid selected_method_index.'], 422);
     }
+
+    $paymentMethodId = $integrationIds[$selectedIndex];
+    $paymentMethod = PaymobMethod::where('integration_id', $paymentMethodId)->first();
+
+    if (!$paymentMethod) {
+        return response()->json(['error' => 'Invalid payment method ID (integration_id).'], 422);
+    }
+
+    $billingData = $request->input('billing_data', [
+        'first_name'   => $request->input('first_name', 'Unknown'),
+        'last_name'    => $request->input('last_name', 'N/A'),
+        'email'        => $request->input('email', 'unknown@example.com'),
+        'phone_number' => $request->input('phone_number', '0000000000'),
+    ]);
+
+    // (2) تنظيف الوصف + fallback
+    $bookDescription = strip_tags((string) ($book->description ?? ''));
+    $bookDescription = trim($bookDescription);
+    if ($bookDescription === '') {
+        $bookDescription = 'Book Payment';
+    }
+    $bookDescription = mb_substr($bookDescription, 0, 255, 'UTF-8');
+
+    $data = [
+        'amount'           => $priceInCents,
+        'currency'         => config('paymob.currency'),
+        'billing_data'     => $billingData,
+        'items' => [[
+            'name'        => (string) $book->nameOfBook,
+            'amount'      => $priceInCents,
+            'description' => $bookDescription,
+        ]],
+        'special_reference' => uniqid('ref_', true),
+        'expiration'        => (int) config('paymob.expiration'),
+        'notification_url'  => config('paymob.notification_url'),
+        'redirection_url'   => config('paymob.redirection_url'),
+        'payment_methods'   => $integrationIds,
+    ];
+
+    try {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('paymob.secret_key'),
+            'Content-Type'  => 'application/json',
+        ])->post('https://accept.paymob.com/v1/intention/', $data);
+
+        if ($response->successful()) {
+            $paymobOrderId = $response->json()['intention_order_id'];
+
+            $transaction = PaymobTransaction::create([
+                'special_reference' => $data['special_reference'],
+                'paymob_order_id'   => $paymobOrderId,
+                'book_id'           => $book->id,
+                'payment_method_id' => $paymentMethod->id,
+                'price'             => $book->price,
+                'currency'          => $data['currency'],
+                'status'            => 'pending',
+            ]);
+
+            return response()->json([
+                'transaction' => $transaction,
+                'response'    => $response->json(),
+            ]);
+        } else {
+            return response()->json([
+                'error'   => 'Request failed',
+                'details' => $response->json(),
+            ], 422);
+        }
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
 
     public function generateCheckoutUrl(Request $request)
     {
